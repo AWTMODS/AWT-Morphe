@@ -137,6 +137,22 @@ val microGReSupportPatch = patch(
              * original Play-distributed identity. SHA-1 was read from the
              * v2/v3 signing block of the supplied 76.1.2139 base APK.
              */
+            /*
+             * Android 11+ package visibility: make the renamed GmsCore package
+             * discoverable to Regain's package/service checks. The stock
+             * Morphe implementation adds equivalent package queries.
+             */
+            val queries = manifest.elements("queries").firstOrNull()
+                ?: manifest.root.appendChild("queries")
+            if (queries.elements("package").none {
+                    it.attribute("android:name") == MICROG_GMS_PACKAGE
+                }
+            ) {
+                queries.appendChild("package") {
+                    setAttribute("android:name", MICROG_GMS_PACKAGE)
+                }
+            }
+
             val application = manifest.elements("application").first()
             val metadata = mapOf(
                 "$MICROG_GMS_PACKAGE.SPOOFED_PACKAGE_NAME" to REGAIN_PACKAGE_NAME,
