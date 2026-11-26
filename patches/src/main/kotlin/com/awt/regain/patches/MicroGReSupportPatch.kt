@@ -22,7 +22,7 @@ private const val REGAIN_SIGNING_CERT_SHA1 = "f1d63dc9f6d5b7ac1091b6a7723b957664
 @Suppress("unused")
 val microGReSupportPatch = patch(
     name = "MicroG-RE support",
-    description = "Routes Regain's Google ID Credential Manager request to MicroG-RE and configures Regain package/signature spoofing metadata.",
+    description = "Routes Regain Google ID Credential Manager, supported GMS service actions, and Firebase C2DM names to MicroG-RE; configures Regain package/signature metadata.",
     default = false,
 ) {
     compatibleWith(COMPATIBILITY_REGAIN)
