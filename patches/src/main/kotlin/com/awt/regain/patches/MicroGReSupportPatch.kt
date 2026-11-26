@@ -72,7 +72,6 @@ val microGReSupportPatch = patch(
             // Firebase Cloud Messaging uses the namespaced C2DM endpoints in MicroG-RE.
             "com.google.android.c2dm.intent.RECEIVE" to "$MICROG_VENDOR_GROUP_ID.android.c2dm.intent.RECEIVE",
             "com.google.android.c2dm.intent.REGISTER" to "$MICROG_VENDOR_GROUP_ID.android.c2dm.intent.REGISTER",
-            "com.google.android.c2dm.intent.REGISTRATION" to "$MICROG_VENDOR_GROUP_ID.android.c2dm.intent.REGISTRATION",
             "com.google.android.c2dm.permission.RECEIVE" to "$MICROG_VENDOR_GROUP_ID.android.c2dm.permission.RECEIVE",
             "com.google.android.c2dm.permission.SEND" to "$MICROG_VENDOR_GROUP_ID.android.c2dm.permission.SEND",
             "com.google.iid.TOKEN_REQUEST" to "$MICROG_VENDOR_GROUP_ID.iid.TOKEN_REQUEST",
