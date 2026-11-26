@@ -54,6 +54,54 @@ This SHA-256 matches the certificate SHA-256 recorded by the separate Regain APK
 
 These values must be rechecked against the exact original APK used for patching before release.
 
+
+
+## Exact 76.1.2139 XAPK inspection (2026-11-26)
+
+The supplied `regain-76-1-2139.xapk` was opened and the main APK extracted. It contains:
+- `ai.regainapp.apk` (79,497,291 bytes)
+- `config.arm64_v8a.apk`
+- `config.armeabi_v7a.apk`
+- density splits for mdpi through xxxhdpi, including tvdpi
+
+The main APK contains four DEX files. DEX string/type-table inspection confirms that the sign-in implementation is **not the old legacy GoogleSignInClient-only flow**.
+
+### Confirmed authentication stack
+
+The exact build contains:
+- `androidx.credentials.CredentialManager`
+- `androidx.credentials.playservices.CredentialProviderPlayServicesImpl`
+- `com.google.android.libraries.identity.googleid`
+- `GetSignInWithGoogleOption`
+- `GoogleIdTokenParsingException`
+- `TYPE_GOOGLE_ID_TOKEN_CREDENTIAL`
+- `BUNDLE_KEY_ID_TOKEN`
+
+DEX log strings explicitly include:
+- `Created CredentialManager instance`
+- `Built GetCredentialRequest`
+- `Created GetSignInWithGoogleOption`
+- `Calling getCredential() - waiting for Google account selector to appear`
+
+This is the AndroidX Credential Manager + Google ID library path, specifically the Sign in with Google option. AndroidX's Play Services credential provider delegates to Google Play services. This is materially different from Firebase Auth's legacy `GoogleSignInClient` flow.
+
+The backend endpoint string `/auth/google_sign_in` remains present. The sign-in result therefore still has to provide a Google ID token that Regain can submit to its own backend.
+
+### Implication for GmsCore / MicroG-RE
+
+A generic package-name/manifest GmsCore patch does not prove this credential flow will work. The target calls the Credential Manager Play Services provider and requests a Google ID token. We must verify that the selected MicroG-RE release implements the specific Identity/Credential Manager service path used by the bundled AndroidX provider.
+
+Do not classify this as "Firebase GoogleSignIn" solely because Firebase is bundled; the exact APK evidence identifies Credential Manager + Google ID token as the sign-in mechanism.
+
+### Next technical tasks
+
+- Decode the binary manifest and inspect package queries, provider declarations, app metadata, and GMS-related permissions.
+- Resolve the obfuscated app class/method that constructs `GetSignInWithGoogleOption` and calls `CredentialManager.getCredential()`.
+- Inspect `CredentialProviderPlayServicesImpl` and its GMS service/action dependencies in the exact DEX.
+- Inspect the APK signing block directly and verify the signer SHA-1 against the published metadata before using it in a patch.
+- Check current MicroG-RE source for the exact Identity/Credential Manager service interfaces, not just its generic Google sign-in or Firebase feature list.
+- Implement an opt-in GmsCore support patch with verified app-specific fingerprints; retain the original patch as default-safe until the build and device test pass.
+
 ## Planned implementation
 
 1. Inspect the exact 76.1.2139 base APK and its split set.
