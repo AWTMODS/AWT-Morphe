@@ -83,7 +83,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: "Regain Patches (latest)"
+          name: "AWT Morphe (latest)"
           body: |
             Auto-built patch bundle for **Regain v76.1.2139**
             

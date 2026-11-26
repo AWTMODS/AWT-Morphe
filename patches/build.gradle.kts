@@ -3,7 +3,7 @@ version = "1.0.0"
 
 patches {
     about {
-        name = "Regain Patches"
+        name = "AWT Morphe"
         description = "Morphe patches for Regain (ai.regainapp)"
         source = "https://github.com/AWTMODS/AWT-Morphe"
         author = "AWTMODS"
