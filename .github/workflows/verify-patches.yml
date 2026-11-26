@@ -1,6 +1,24 @@
 name: Verify Morphe patch bundle
 
 on:
+  # Run inside the contributor's fork on every update to this feature branch.
+  # This avoids the upstream fork-PR approval gate while still building the same commit.
+  push:
+    branches:
+      - feature/regain-gmscore-support
+    paths:
+      - ".github/workflows/verify-patches.yml"
+      - "patches/**"
+      - "extensions/**"
+      - "gradle/**"
+      - "gradlew"
+      - "gradlew.bat"
+      - "settings.gradle.kts"
+      - "build.gradle.kts"
+      - "gradle.properties"
+
+  # Keep upstream PR validation enabled; an AWTMODS maintainer must approve
+  # this run before GitHub executes it against the base repository.
   pull_request:
     branches:
       - main
@@ -14,6 +32,9 @@ on:
       - "settings.gradle.kts"
       - "build.gradle.kts"
       - "gradle.properties"
+
+  # Allows manual re-validation from the fork's Actions tab.
+  workflow_dispatch:
 
 permissions:
   contents: read
