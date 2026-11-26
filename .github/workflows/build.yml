@@ -32,29 +32,68 @@ jobs:
       - name: Build patch bundle
         env:
           GITHUB_ACTOR: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GPR_TOKEN must be a PAT with read:packages scope stored in repo secrets
+          GITHUB_TOKEN: ${{ secrets.GPR_TOKEN }}
         run: ./gradlew build
 
-      - name: Get version from patches-bundle.json
+      - name: Find built .mpp file
+        id: find_mpp
+        run: |
+          MPP_FILE=$(find . -name "*.mpp" | head -1)
+          echo "mpp_file=$MPP_FILE" >> $GITHUB_OUTPUT
+          echo "Found: $MPP_FILE"
+          ls -la $(dirname $MPP_FILE) || true
+
+      - name: Get patch version
         id: get_version
         run: |
-          VERSION=$(cat patches-bundle.json | python3 -c "import sys,json; print(json.load(sys.stdin)['version'])" 2>/dev/null || echo "1.0.0")
+          # Extract version from build output or use default
+          VERSION=$(find . -name "*.mpp" | head -1 | grep -oP '\d+\.\d+\.\d+' | head -1 || echo "1.0.0")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Delete existing release (if any)
+      - name: Update patches-bundle.json with real download URL
         run: |
-          gh release delete latest --yes 2>/dev/null || true
+          VERSION="${{ steps.get_version.outputs.version }}"
+          MPP_FILE="${{ steps.find_mpp.outputs.mpp_file }}"
+          FILENAME=$(basename "$MPP_FILE")
+          cat > patches-bundle.json << EOF
+          {
+            "download_url": "https://github.com/AWTMODS/AWT-Morphe/releases/download/latest/$FILENAME",
+            "version": "$VERSION"
+          }
+          EOF
+          cat patches-bundle.json
+
+      - name: Delete existing latest release (if any)
+        run: gh release delete latest --yes 2>/dev/null || true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create GitHub Release and upload bundle
+      - name: Delete existing latest tag (if any)
+        run: git push origin :refs/tags/latest 2>/dev/null || true
+
+      - name: Create GitHub Release and upload assets
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
           name: "Regain Patches (latest)"
-          body: "Auto-built patch bundle for Regain v76.1.2139"
+          body: |
+            Auto-built patch bundle for **Regain v76.1.2139**
+            
+            Add this source URL in Morphe:
+            `https://raw.githubusercontent.com/AWTMODS/AWT-Morphe/main/patches-bundle.json`
           files: |
-            build/libs/*.mpp
+            ${{ steps.find_mpp.outputs.mpp_file }}
             patches-bundle.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit updated patches-bundle.json back to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add patches-bundle.json
+          git diff --cached --quiet || git commit -m "chore: update patches-bundle.json [skip ci]"
+          git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
