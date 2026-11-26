@@ -49,6 +49,26 @@ val microGReSupportPatch = patch(
             "content://com.google.android.gms.phenotype/" to
                 "content://$MICROG_GMS_PACKAGE.phenotype/",
 
+            // Service actions that MicroG-RE explicitly exposes under its own package.
+            "com.google.android.gms.auth.api.identity.service.signin.START" to
+                "$MICROG_GMS_PACKAGE.auth.api.identity.service.signin.START",
+            "com.google.android.gms.auth.api.identity.service.credentialsaving.START" to
+                "$MICROG_GMS_PACKAGE.auth.api.identity.service.credentialsaving.START",
+            "com.google.android.gms.auth.api.signin.service.START" to
+                "$MICROG_GMS_PACKAGE.auth.api.signin.service.START",
+            "com.google.android.gms.auth.api.credentials.service.START" to
+                "$MICROG_GMS_PACKAGE.auth.api.credentials.service.START",
+            "com.google.android.gms.signin.service.START" to
+                "$MICROG_GMS_PACKAGE.signin.service.START",
+            "com.google.android.gms.measurement.START" to
+                "$MICROG_GMS_PACKAGE.measurement.START",
+            "com.google.android.gms.common.telemetry.service.START" to
+                "$MICROG_GMS_PACKAGE.common.telemetry.service.START",
+            "com.google.android.gms.fido.fido2.regular.START" to
+                "$MICROG_GMS_PACKAGE.fido.fido2.regular.START",
+            "com.google.android.gms.phenotype.service.START" to
+                "$MICROG_GMS_PACKAGE.phenotype.service.START",
+
             // Firebase Cloud Messaging uses the namespaced C2DM endpoints in MicroG-RE.
             "com.google.android.c2dm.intent.RECEIVE" to "$MICROG_VENDOR_GROUP_ID.android.c2dm.intent.RECEIVE",
             "com.google.android.c2dm.intent.REGISTER" to "$MICROG_VENDOR_GROUP_ID.android.c2dm.intent.REGISTER",
@@ -78,6 +98,24 @@ val microGReSupportPatch = patch(
                 "com.google.android.gms.phenotype" to "$MICROG_GMS_PACKAGE.phenotype",
                 "com.google.android.gms.chimera" to "$MICROG_GMS_PACKAGE.chimera",
                 "com.google.android.gms.fonts" to "$MICROG_GMS_PACKAGE.fonts",
+                "com.google.android.gms.auth.api.identity.service.signin.START" to
+                    "$MICROG_GMS_PACKAGE.auth.api.identity.service.signin.START",
+                "com.google.android.gms.auth.api.identity.service.credentialsaving.START" to
+                    "$MICROG_GMS_PACKAGE.auth.api.identity.service.credentialsaving.START",
+                "com.google.android.gms.auth.api.signin.service.START" to
+                    "$MICROG_GMS_PACKAGE.auth.api.signin.service.START",
+                "com.google.android.gms.auth.api.credentials.service.START" to
+                    "$MICROG_GMS_PACKAGE.auth.api.credentials.service.START",
+                "com.google.android.gms.signin.service.START" to
+                    "$MICROG_GMS_PACKAGE.signin.service.START",
+                "com.google.android.gms.measurement.START" to
+                    "$MICROG_GMS_PACKAGE.measurement.START",
+                "com.google.android.gms.common.telemetry.service.START" to
+                    "$MICROG_GMS_PACKAGE.common.telemetry.service.START",
+                "com.google.android.gms.fido.fido2.regular.START" to
+                    "$MICROG_GMS_PACKAGE.fido.fido2.regular.START",
+                "com.google.android.gms.phenotype.service.START" to
+                    "$MICROG_GMS_PACKAGE.phenotype.service.START",
             )
 
             manifest.elements().forEach { element ->
