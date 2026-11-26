@@ -1,4 +1,5 @@
 group = "com.awt.regain"
+version = "1.0.0"
 
 patches {
     about {
