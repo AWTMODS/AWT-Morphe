@@ -82,8 +82,21 @@ These values must be rechecked against the exact original APK used for patching 
 
 ## Compatibility warning
 
-microG's published implementation matrix has historically marked the Firebase GoogleSignIn API as unsupported. Do not claim support until the exact Regain sign-in implementation is known and the token flow has been tested. If Regain uses an unsupported API, GmsCore package/manifest wiring alone will not create a working Google ID token.
+microG's current published implementation matrix marks Firebase Auth as partial: anonymous, email/password, phone and custom-token methods are supported, while GoogleSignIn and FirebaseUI are listed as unsupported. Account authentication itself is also marked partial. Do not claim support until the exact Regain sign-in implementation is known and the token flow has been tested. If Regain uses an unsupported API, GmsCore package/manifest wiring alone will not create a working Google ID token.
+
+For this Morphe patch repository, the practical runtime target is **Morphe MicroG-RE**, the Morphe-maintained GmsCore fork. Its patched package namespace is `app.revanced`, with the GmsCore package exposed as `app.revanced.android.gms`. The stock microG project and MicroG-RE should not be treated as interchangeable installation targets.
 
 ## Next required artifact
 
 The exact original `ai.regainapp 76.1.2139` base APK (plus its split APKs, if patching the Play split set) is required to derive stable app-specific fingerprints. A decompiled APK containing DEX/smali and the decoded manifest is also acceptable. Do not use the already-analyzed 75.4.2131 build as the final fingerprint source.
+
+
+## Reference sources
+
+- Morphe shared GmsCore patch: https://github.com/MorpheApp/morphe-patches/blob/d38d9d841a965953751ef1f733e308bcde46a5a7/patches/src/main/kotlin/app/morphe/patches/shared/misc/gms/GmsCoreSupportPatch.kt
+- Morphe GmsCore runtime: https://github.com/MorpheApp/morphe-patches/blob/d38d9d841a965953751ef1f733e308bcde46a5a7/extensions/shared-youtube/library/src/main/java/app/morphe/extension/shared/patches/GmsCoreSupportPatch.java
+- Morphe MicroG-RE: https://github.com/MorpheApp/MicroG-RE
+- microG API implementation status: https://github.com/microg/GmsCore/wiki/Implementation-status
+- Google documentation on Google Sign-In certificate SHA-1 requirements: https://developers.google.com/android/guides/client-auth
+- Regain 76.1.2139 APK metadata and signer fingerprint: https://apkbog.com/en/apk/regain-study-timer-for-focus/76.1.2139
+- Regain 75.4.2131 reverse-engineering notes: https://github.com/mitunmanav/apps-autopsy/tree/main/apps/regain/report
