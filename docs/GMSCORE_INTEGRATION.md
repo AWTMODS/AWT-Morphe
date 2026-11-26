@@ -148,3 +148,31 @@ The exact original `ai.regainapp 76.1.2139` base APK (plus its split APKs, if pa
 - Google documentation on Google Sign-In certificate SHA-1 requirements: https://developers.google.com/android/guides/client-auth
 - Regain 76.1.2139 APK metadata and signer fingerprint: https://apkbog.com/en/apk/regain-study-timer-for-focus/76.1.2139
 - Regain 75.4.2131 reverse-engineering notes: https://github.com/mitunmanav/apps-autopsy/tree/main/apps/regain/report
+
+
+## Current MicroG-RE source cross-check
+
+The current `MorpheApp/MicroG-RE` main branch (inspected 2026-11-26) contains an implementation matching the API family observed in the Regain APK:
+
+- `play-services-core/.../org/microg/gms/auth/credentials/provider/GoogleIdService.kt`
+  - Implements AndroidX `CredentialProviderService`.
+  - Handles `TYPE_GOOGLE_ID_TOKEN_CREDENTIAL`.
+  - Reads the Sign in with Google subtype, server client ID and nonce.
+  - Produces a Google ID credential entry and launches `SignInProxyActivity`.
+- `.../SignInProxyActivity.kt`
+  - Creates a `GetSignInIntentRequest`.
+  - Requests an ID token using the server client ID.
+  - Converts the successful `SignInCredential.googleIdToken` into AndroidX `CustomCredential(TYPE_GOOGLE_ID_TOKEN_CREDENTIAL)`.
+- `play-services-core/src/main/res/xml/credentials_provider_google_id.xml`
+  - Declares the Google ID token credential capability.
+- `play-services-core/.../GoogleIdService.kt` is annotated `@RequiresApi(34)`; the manifest/provider path is therefore Android 14+ specific.
+
+This is strong source-level evidence that current MicroG-RE has a Google ID Credential Provider path corresponding to the Regain app's Credential Manager + Sign in with Google request. It supersedes the earlier broad caution based only on the Firebase GoogleSignIn implementation matrix. It is not yet proof of successful Regain login: OAuth client configuration, package/certificate identity, Android provider registration, account setup, and the final backend token exchange still need testing.
+
+The user device context is Android 16, so the provider's API 34 minimum is not itself a blocker. A device test is still required.
+
+Source files:
+- https://github.com/MorpheApp/MicroG-RE/blob/main/play-services-core/src/main/kotlin/org/microg/gms/auth/credentials/provider/GoogleIdService.kt
+- https://github.com/MorpheApp/MicroG-RE/blob/main/play-services-core/src/main/kotlin/org/microg/gms/auth/credentials/provider/SignInProxyActivity.kt
+- https://github.com/MorpheApp/MicroG-RE/blob/main/play-services-core/src/main/res/xml/credentials_provider_google_id.xml
+
