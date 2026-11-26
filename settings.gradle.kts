@@ -1,16 +1,15 @@
-rootProject.name = "regain-patches"
+rootProject.name = "AWT-Morphe"
 
 pluginManagement {
     repositories {
-        mavenLocal()
         gradlePluginPortal()
         google()
         maven {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/MorpheApp/registry")
             credentials {
-                username = providers.gradleProperty("gpr.user").getOrElse(System.getenv("GITHUB_ACTOR"))
-                password = providers.gradleProperty("gpr.key").getOrElse(System.getenv("GITHUB_TOKEN"))
+                username = providers.gradleProperty("gpr.user").orNull ?: System.getenv("GITHUB_ACTOR")
+                password = providers.gradleProperty("gpr.key").orNull ?: System.getenv("GITHUB_TOKEN")
             }
         }
         maven { url = uri("https://jitpack.io") }
@@ -18,7 +17,11 @@ pluginManagement {
 }
 
 plugins {
-    id("app.morphe.patches") version "1.3.4"
+    id("app.morphe.patches") version "2.1.2"
 }
 
-include(":patches")
+configure<app.morphe.patches.gradle.SettingsExtension> {
+    extensions {
+        proguardFiles(rootProject.projectDir.resolve("extensions/proguard-rules.pro").toString())
+    }
+}
