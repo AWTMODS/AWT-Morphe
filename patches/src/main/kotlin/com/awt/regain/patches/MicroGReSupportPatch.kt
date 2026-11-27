@@ -1,15 +1,44 @@
 package com.awt.regain.patches
 
-import app.morphe.patcher.string
+import app.morphe.patcher.Fingerprint
+import app.morphe.patcher.StringComparisonType
 import app.morphe.patcher.patch.patch
 import app.morphe.patcher.patch.replaceStrings
 import app.morphe.patcher.patch.resourceXml
+import app.morphe.patcher.string
+import app.morphe.patcher.util.returnEarly
+import com.android.tools.smali.dexlib2.AccessFlags
 import com.awt.regain.patches.Constants.COMPATIBILITY_REGAIN
 
 private const val MICROG_VENDOR_GROUP_ID = "app.revanced"
 private const val MICROG_GMS_PACKAGE = "$MICROG_VENDOR_GROUP_ID.android.gms"
 private const val REGAIN_PACKAGE_NAME = "ai.regainapp"
 private const val REGAIN_SIGNING_CERT_SHA1 = "f1d63dc9f6d5b7ac1091b6a7723b957664d36f60"
+
+/**
+ * Matches GooglePlayServicesUtilLight.isGooglePlayServicesAvailable(Context, int): int.
+ * Must be resolved before "com.google.android.gms" string replacement runs.
+ */
+private object GooglePlayUtilityFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.STATIC),
+    returnType = "I",
+    parameters = listOf("L", "I"),
+    filters = listOf(
+        string("MetadataValueReader"),
+        string("This should never happen."),
+        string("com.google.android.gms"),
+    ),
+)
+
+/**
+ * Matches GooglePlayServicesUtilLight.ensurePlayServicesAvailable(Context, int): void.
+ */
+private object ServiceCheckFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.STATIC),
+    returnType = "V",
+    parameters = listOf("L", "I"),
+    strings = listOf("Google Play Services not available"),
+)
 
 /**
  * Regain 76.1.2139 uses AndroidX Credential Manager with
@@ -29,6 +58,15 @@ val microGReSupportPatch = patch(
 
     execute {
         /*
+         * Bypass Google Play Services signature/availability checks when present
+         * in the target APK so remapped app.revanced.android.gms is not rejected
+         * as SERVICE_INVALID. Use methodOrNull so R8-stripped builds do not fail.
+         * Must run before "com.google.android.gms" is rewritten below.
+         */
+        GooglePlayUtilityFingerprint.methodOrNull?.returnEarly(0)
+        ServiceCheckFingerprint.methodOrNull?.returnEarly()
+
+        /*
          * MicroG-RE's credential provider advertises:
          * app.revanced.android.libraries.identity.googleid.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
          *
@@ -46,8 +84,6 @@ val microGReSupportPatch = patch(
             "com.google.android.gms.phenotype" to "$MICROG_GMS_PACKAGE.phenotype",
             "com.google.android.gms.chimera" to "$MICROG_GMS_PACKAGE.chimera",
             "com.google.android.gms.fonts" to "$MICROG_GMS_PACKAGE.fonts",
-            "content://com.google.android.gms.phenotype/" to
-                "content://$MICROG_GMS_PACKAGE.phenotype/",
 
             // Service actions that MicroG-RE explicitly exposes under its own package.
             "com.google.android.gms.auth.api.identity.service.signin.START" to
@@ -66,6 +102,8 @@ val microGReSupportPatch = patch(
                 "$MICROG_GMS_PACKAGE.common.telemetry.service.START",
             "com.google.android.gms.fido.fido2.regular.START" to
                 "$MICROG_GMS_PACKAGE.fido.fido2.regular.START",
+            "com.google.android.gms.fonts.service.START" to
+                "$MICROG_GMS_PACKAGE.fonts.service.START",
             "com.google.android.gms.phenotype.service.START" to
                 "$MICROG_GMS_PACKAGE.phenotype.service.START",
 
@@ -84,6 +122,23 @@ val microGReSupportPatch = patch(
             }
         )
 
+        // Rewrite exact and sub-path content:// URIs for MicroG-RE's supported authorities.
+        val microGAuthorities = listOf(
+            "com.google.android.gms.phenotype",
+            "com.google.android.gms.chimera",
+            "com.google.android.gms.fonts",
+        )
+        replaceStrings(string("content://com.google.android.gms.", StringComparisonType.STARTS_WITH)) { _, _, value ->
+            val matchedAuthority = microGAuthorities.firstOrNull { authority ->
+                value == "content://$authority" || value.startsWith("content://$authority/")
+            } ?: return@replaceStrings null
+
+            value.replaceFirst(
+                "content://$matchedAuthority",
+                "content://${matchedAuthority.replaceFirst("com.google", MICROG_VENDOR_GROUP_ID)}",
+            )
+        }
+
         resourceXml("AndroidManifest.xml").use { manifest ->
             /*
              * Redirect only manifest permission/action/authority values that
@@ -99,11 +154,14 @@ val microGReSupportPatch = patch(
                 "com.google.android.c2dm.intent.REGISTER" to "$MICROG_VENDOR_GROUP_ID.android.c2dm.intent.REGISTER",
                 "com.google.android.c2dm.permission.RECEIVE" to "$MICROG_VENDOR_GROUP_ID.android.c2dm.permission.RECEIVE",
                 "com.google.android.c2dm.permission.SEND" to "$MICROG_VENDOR_GROUP_ID.android.c2dm.permission.SEND",
+                "com.google.iid.TOKEN_REQUEST" to "$MICROG_VENDOR_GROUP_ID.iid.TOKEN_REQUEST",
                 "com.google.android.gms.permission.AD_ID" to "$MICROG_GMS_PACKAGE.permission.AD_ID",
                 "com.google.android.gms.phenotype.service.START" to
                     "$MICROG_GMS_PACKAGE.phenotype.service.START",
                 "com.google.android.gms.phenotype" to "$MICROG_GMS_PACKAGE.phenotype",
                 "com.google.android.gms.chimera" to "$MICROG_GMS_PACKAGE.chimera",
+                "com.google.android.gms.fonts.service.START" to
+                    "$MICROG_GMS_PACKAGE.fonts.service.START",
                 "com.google.android.gms.fonts" to "$MICROG_GMS_PACKAGE.fonts",
                 "com.google.android.gms.auth.api.identity.service.signin.START" to
                     "$MICROG_GMS_PACKAGE.auth.api.identity.service.signin.START",
@@ -139,11 +197,6 @@ val microGReSupportPatch = patch(
             }
 
             /*
-             * Let MicroG-RE answer package/signature checks using Regain's
-             * original Play-distributed identity. SHA-1 was read from the
-             * v2/v3 signing block of the supplied 76.1.2139 base APK.
-             */
-            /*
              * Android 11+ package visibility: make the renamed GmsCore package
              * discoverable to Regain's package/service checks. The stock
              * Morphe implementation adds equivalent package queries.
@@ -159,6 +212,11 @@ val microGReSupportPatch = patch(
                 }
             }
 
+            /*
+             * Let MicroG-RE answer package/signature checks using Regain's
+             * original Play-distributed identity (verified against
+             * PackageSpoofUtils.kt in MorpheApp/MicroG-RE).
+             */
             val application = manifest.elements("application").first()
             val metadata = mapOf(
                 "$MICROG_GMS_PACKAGE.SPOOFED_PACKAGE_NAME" to REGAIN_PACKAGE_NAME,
