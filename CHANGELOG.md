@@ -1,3 +1,9 @@
+## [1.0.1](https://github.com/AWTMODS/AWT-Morphe/compare/v1.0.0...v1.0.1) (2026-11-27)
+
+### 🚀 Updated App Support
+
+* add Regain 76.2.2151 support ([20cc405](https://github.com/AWTMODS/AWT-Morphe/commit/20cc405a59621b4f46c1cf06323b9edb4770913e))
+
 ## 1.0.0 (2026-11-26)
 
 ### ✨ New Features
