@@ -79,7 +79,8 @@ val microGReSupportPatch = patch(
             "com.google.android.libraries.identity.googleid.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL" to
                 "$MICROG_VENDOR_GROUP_ID.android.libraries.identity.googleid.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL",
 
-            // Package/authority strings consumed by the renamed MicroG-RE package.
+            // Account type and package/authority strings consumed by MicroG-RE.
+            "com.google" to MICROG_VENDOR_GROUP_ID,
             "com.google.android.gms" to MICROG_GMS_PACKAGE,
             "com.google.android.gms.phenotype" to "$MICROG_GMS_PACKAGE.phenotype",
             "com.google.android.gms.chimera" to "$MICROG_GMS_PACKAGE.chimera",
