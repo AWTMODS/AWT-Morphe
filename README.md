@@ -19,7 +19,7 @@ Click the button below, or manually add this repo url to Morphe Manager: https:/
 ## 🩹 Patches list
 
 <!-- PATCHES_START -->
-> **[v1.2.0-dev.1](https://github.com/AWTMODS/AWT-Morphe/releases/tag/v1.2.0-dev.1)**&nbsp;&nbsp;&middot;&nbsp;&nbsp;`dev`&nbsp;&nbsp;&middot;&nbsp;&nbsp;**8 patches** across **2 apps**&nbsp;&nbsp;&middot;&nbsp;&nbsp;[Full details](PATCHES.md)
+> **[v1.2.0-dev.2](https://github.com/AWTMODS/AWT-Morphe/releases/tag/v1.2.0-dev.2)**&nbsp;&nbsp;&middot;&nbsp;&nbsp;`dev`&nbsp;&nbsp;&middot;&nbsp;&nbsp;**8 patches** across **2 apps**&nbsp;&nbsp;&middot;&nbsp;&nbsp;[Full details](PATCHES.md)
 
 | # | App | Patches | Version | Package |
 |---|---|---|---|---|

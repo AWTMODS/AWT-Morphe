@@ -1,3 +1,9 @@
+## [1.2.0-dev.2](https://github.com/AWTMODS/AWT-Morphe/compare/v1.2.0-dev.1...v1.2.0-dev.2) (2026-11-27)
+
+### 🐛 Bug Fixes
+
+* **mimo:** update patch ([b8d20ce](https://github.com/AWTMODS/AWT-Morphe/commit/b8d20ce7fd9d1a2460dbaf9a338d3d11e244c949))
+
 ## [1.2.0-dev.1](https://github.com/AWTMODS/AWT-Morphe/compare/v1.1.0...v1.2.0-dev.1) (2026-11-27)
 
 ### ✨ New Features
