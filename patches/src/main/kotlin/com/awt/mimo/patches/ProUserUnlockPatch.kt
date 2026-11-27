@@ -1,8 +1,8 @@
-package com.awt.regain.patches
+package com.awt.mimo.patches
 
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.patch.patch
-import com.awt.regain.patches.Constants.COMPATIBILITY_MIMO
+import com.awt.mimo.patches.Constants.COMPATIBILITY_MIMO
 
 @Suppress("unused")
 val mimoForcePremiumTierPatch = patch(
