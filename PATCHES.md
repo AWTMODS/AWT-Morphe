@@ -1,6 +1,6 @@
 # Patches
 
-> Generated from `patches-list.json` — **v1.2.0-dev.2** (`dev`) · **8 patches** across **2 apps** · back to [README](README.md)
+> Generated from `patches-list.json` — **v1.2.0-dev.3** (`dev`) · **9 patches** across **2 apps** · back to [README](README.md)
 
 ---
 
@@ -11,6 +11,7 @@
 | Patch | Details |
 |---|---|
 | **Force premium subscription tier** | Overwrites the SubscriptionTier parameter with the premium enum constant in the Mimo IAP-model constructor. |
+| **Signature spoof** | Redirects PackageManager.getPackageInfo(...) through the universal SignatureSpoof helper so the original release signing certificate is returned, bypassing license/signature checks. |
 
 ---
 

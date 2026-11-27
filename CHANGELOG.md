@@ -1,3 +1,13 @@
+## [1.2.0-dev.3](https://github.com/AWTMODS/AWT-Morphe/compare/v1.2.0-dev.2...v1.2.0-dev.3) (2026-11-27)
+
+### ✨ New Features
+
+* **mimo:** update mimo patches ([ed56258](https://github.com/AWTMODS/AWT-Morphe/commit/ed56258cdc9d093a6c0de0b3110455b541522f65))
+
+### 🐛 Bug Fixes
+
+* **mimo:** fix MimoSignatureSpoofPatch compilation ([69af45d](https://github.com/AWTMODS/AWT-Morphe/commit/69af45d57c9d58c8e26c41d638c594fd76a2d01c))
+
 ## [1.2.0-dev.2](https://github.com/AWTMODS/AWT-Morphe/compare/v1.2.0-dev.1...v1.2.0-dev.2) (2026-11-27)
 
 ### 🐛 Bug Fixes
