@@ -14,10 +14,19 @@ object Constants {
             targets = listOf(AppTarget(version = "9.39")),
         )
 
-    const val IAP_MODEL_CLASS =
-        "Lcom/getmimo/data/source/remote/iap/model/SubscriptionModel;"
+    // Real obfuscated class that holds the IAP constructor:
+    //   .class public final Lzg/e;
+    //   .method public constructor <init>(
+    //       Ljava/util/List;
+    //       Lcom/revenuecat/purchases/EntitlementInfo;
+    //       Lcom/getmimo/data/source/remote/iap/model/SubscriptionTier;
+    //       Lcom/revenuecat/purchases/EntitlementInfo;
+    //   )V
+    const val IAP_MODEL_CLASS = "Lzg/e;"
+
     const val SUBSCRIPTION_TIER_CLASS =
         "Lcom/getmimo/data/source/remote/iap/model/SubscriptionTier;"
+
     const val SIGNATURE_SPOOF_CLASS =
         "Lapp/morphe/extension/signature/SignatureSpoof;"
 }

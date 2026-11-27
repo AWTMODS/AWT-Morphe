@@ -3,7 +3,7 @@ package com.awt.mimo.patches
 import app.morphe.patcher.Fingerprint
 
 /**
- * Targets the Mimo IAP-model constructor:
+ * Targets the Mimo IAP-model constructor inside the obfuscated class [Lzg/e;]:
  *
  *   .method public constructor <init>(
  *       Ljava/util/List;

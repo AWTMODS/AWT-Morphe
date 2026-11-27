@@ -14,7 +14,13 @@ val mimoForcePremiumTierPatch = patch(
     compatibleWith(COMPATIBILITY_MIMO)
 
     execute {
-        IapModelConstructorFingerprint.method.addInstructions(
+        val method = IapModelConstructorFingerprint.methodOrNull
+            ?: error(
+                "Constructor not found in ${Constants.IAP_MODEL_CLASS}. " +
+                    "Verify the class is still Lzg/e; in Mimo 9.39.",
+            )
+
+        method.addInstructions(
             0,
             """
                 sget-object p3, Lcom/getmimo/data/source/remote/iap/model/SubscriptionTier;->e:Lcom/getmimo/data/source/remote/iap/model/SubscriptionTier;
