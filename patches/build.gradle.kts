@@ -29,7 +29,10 @@ patches {
 val patchListGeneratorClasspath = configurations.create("patchListGeneratorClasspath")
 
 dependencies {
-    implementation(libs.morphe.patches.library)
+    implementation(libs.morphe.patches.library) {
+        exclude(group = "app.morphe", module = "morphe-patcher")
+        exclude(group = "com.github.MorpheApp.smali")
+    }
     compileOnly(libs.gson)
     patchListGeneratorClasspath(libs.gson)
 
