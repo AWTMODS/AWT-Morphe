@@ -19,11 +19,13 @@ Click the button below, or manually add this repo url to Morphe Manager: https:/
 ## 🩹 Patches list
 
 <!-- PATCHES_START -->
-> **[v1.1.0](https://github.com/AWTMODS/AWT-Morphe/releases/tag/v1.1.0)**&nbsp;&nbsp;&middot;&nbsp;&nbsp;`main`&nbsp;&nbsp;&middot;&nbsp;&nbsp;**2 patches** across **1 app**&nbsp;&nbsp;&middot;&nbsp;&nbsp;[Full details](PATCHES.md)
+> **[v1.2.0-dev.1](https://github.com/AWTMODS/AWT-Morphe/releases/tag/v1.2.0-dev.1)**&nbsp;&nbsp;&middot;&nbsp;&nbsp;`dev`&nbsp;&nbsp;&middot;&nbsp;&nbsp;**8 patches** across **2 apps**&nbsp;&nbsp;&middot;&nbsp;&nbsp;[Full details](PATCHES.md)
 
 | # | App | Patches | Version | Package |
 |---|---|---|---|---|
-| 1 | [**Regain**](PATCHES.md#regain-airegainapp) | 2 | `76.2.2151`, `76.1.2139` | [`ai.regainapp`](https://play.google.com/store/apps/details?id=ai.regainapp) |
+| 1 | [**Mimo**](PATCHES.md#mimo-comgetmimo) | 1 | `9.39` | [`com.getmimo`](https://play.google.com/store/apps/details?id=com.getmimo) |
+| 2 | [**Regain**](PATCHES.md#regain-airegainapp) | 2 | `76.2.2151`, `76.1.2139` | [`ai.regainapp`](https://play.google.com/store/apps/details?id=ai.regainapp) |
+| 3 | [**Universal**](PATCHES.md#universal) | 5 | — | — |
 <!-- PATCHES_END -->
 
 ### 🛠️ Building locally

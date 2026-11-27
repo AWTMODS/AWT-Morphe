@@ -1,3 +1,13 @@
+## [1.2.0-dev.1](https://github.com/AWTMODS/AWT-Morphe/compare/v1.1.0...v1.2.0-dev.1) (2026-11-27)
+
+### ✨ New Features
+
+* add universal patches and mimo support ([67f08b7](https://github.com/AWTMODS/AWT-Morphe/commit/67f08b7975a88eadbb442226c7e46288d1379177))
+
+### 🐛 Bug Fixes
+
+* **mimo:** fix package and import in ProUserUnlockPatch ([9e81225](https://github.com/AWTMODS/AWT-Morphe/commit/9e8122503fdc83dfbc816fc6dc25fed1fa8967d7))
+
 ## [1.1.0](https://github.com/AWTMODS/AWT-Morphe/compare/v1.0.1...v1.1.0) (2026-11-27)
 
 ### ✨ New Features
