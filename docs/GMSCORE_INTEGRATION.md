@@ -1,91 +1,65 @@
 # Regain MicroG-RE integration
 
-## Status
+## Status matrix
 
-An opt-in Morphe patch is implemented at:
+| Verification stage | Status | Details |
+|---|---|---|
+| Source-level MicroG-RE match | Verified | Checked against `MorpheApp/MicroG-RE` (`GoogleIdService.kt`, `SignInProxyActivity.kt`, `credentials_provider_google_id.xml`, `PackageSpoofUtils.kt`, and `play-services-core/src/main/AndroidManifest.xml`). |
+| Morphe patch implementation | Implemented | Opt-in patch (`default = false`) at `patches/src/main/kotlin/com/awt/regain/patches/MicroGReSupportPatch.kt` targeting `ai.regainapp` `76.1.2139`. |
+| Patch-bundle compilation & API check | Build-verified in CI | `./gradlew :patches:buildAndroid` (including AnimalSniffer Android API 26 check) passes on the branch. |
+| APK patch application via Morphe | Not yet tested | Requires running Morphe against the Regain `76.1.2139` APK. |
+| On-device Google sign-in & backend `/auth/google_sign_in` | Not yet tested | Requires an Android 14+ (API 34+) device with MicroG-RE installed and enabled as a Credential Manager provider. |
+| FCM registration & push delivery | Not yet tested | C2DM/IID names are remapped to MicroG-RE's `app.revanced` namespace; runtime delivery is unverified. |
 
-`patches/src/main/kotlin/com/awt/regain/patches/MicroGReSupportPatch.kt`
+A successful patch-bundle compilation does **not** establish that APK patching or end-to-end Google authentication works on a device.
 
-- Target: Regain `ai.regainapp`, version `76.1.2139`
-- MicroG runtime: Morphe MicroG-RE, vendor namespace `app.revanced`
-- GmsCore package: `app.revanced.android.gms`
-- Patch default: **off** (select it explicitly in Morphe)
+## Target & runtime
 
-The patch bundle compiles in GitHub Actions (`./gradlew :patches:buildAndroid`), but no installed-device or backend sign-in test has been completed yet. A successful build alone does not establish that sign-in works end-to-end.
+- **Target app:** Regain (`ai.regainapp`), version `76.1.2139`
+- **MicroG runtime:** Morphe MicroG-RE (`app.revanced` vendor namespace, package `app.revanced.android.gms`)
+- **Patch default:** **off** (`default = false` — opt-in via Morphe)
+- **App cloning:** Not used; Regain keeps its original package name `ai.regainapp`.
 
-## Why this uses MicroG-RE
+## Source-level evidence
 
-The supplied Regain 76.1.2139 XAPK was inspected. Its DEX files show that the Google sign-in screen uses:
+Prior inspection of the Regain `76.1.2139` XAPK indicated its Google sign-in flow uses AndroidX `CredentialManager` (`CredentialProviderPlayServicesImpl`), Google Identity Services `GetSignInWithGoogleOption`, `TYPE_GOOGLE_ID_TOKEN_CREDENTIAL`, and `BUNDLE_KEY_ID_TOKEN`, posting the resulting ID token to `/auth/google_sign_in`.
 
-- AndroidX `CredentialManager`
-- AndroidX `CredentialProviderPlayServicesImpl`
-- Google Identity Services `GetSignInWithGoogleOption`
-- `TYPE_GOOGLE_ID_TOKEN_CREDENTIAL` and `BUNDLE_KEY_ID_TOKEN`
+Verified in `MorpheApp/MicroG-RE`:
 
-The app waits for the Credential Manager account selector, obtains a Google ID token, and sends it to Regain's own `/auth/google_sign_in` endpoint.
-
-MicroG-RE's current source contains a matching Android Credential Provider implementation:
-
-- [GoogleIdService.kt](https://github.com/MorpheApp/MicroG-RE/blob/main/play-services-core/src/main/kotlin/org/microg/gms/auth/credentials/provider/GoogleIdService.kt) handles `TYPE_GOOGLE_ID_TOKEN_CREDENTIAL`.
-- [SignInProxyActivity.kt](https://github.com/MorpheApp/MicroG-RE/blob/main/play-services-core/src/main/kotlin/org/microg/gms/auth/credentials/provider/SignInProxyActivity.kt) requests a Google ID token and returns an AndroidX custom credential containing it.
-- [credentials_provider_google_id.xml](https://github.com/MorpheApp/MicroG-RE/blob/main/play-services-core/src/main/res/xml/credentials_provider_google_id.xml) advertises the MicroG-RE credential type.
-
-This provider requires Android API 34 or newer. The app's AndroidX request and MicroG-RE's provider use the same credential family, so this is a more direct match than relying on the older Firebase GoogleSignIn compatibility matrix.
+- [GoogleIdService.kt](https://github.com/MorpheApp/MicroG-RE/blob/main/play-services-core/src/main/kotlin/org/microg/gms/auth/credentials/provider/GoogleIdService.kt): Matches `TYPE_GOOGLE_ID_TOKEN_CREDENTIAL = "${BuildConfig.BASE_PACKAGE_NAME}.android.libraries.identity.googleid.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL"` (`app.revanced...`), while parsing the original `com.google.android.libraries.identity.googleid.*` subtype and `BUNDLE_KEY_*` keys. Annotated `@RequiresApi(34)`.
+- [SignInProxyActivity.kt](https://github.com/MorpheApp/MicroG-RE/blob/main/play-services-core/src/main/kotlin/org/microg/gms/auth/credentials/provider/SignInProxyActivity.kt): Requests a Google ID token via MicroG-RE's assisted sign-in flow and returns a `CustomCredential(TYPE_GOOGLE_ID_TOKEN_CREDENTIAL, credentialData)` populated with `BUNDLE_KEY_ID_TOKEN` and profile fields.
+- [credentials_provider_google_id.xml](https://github.com/MorpheApp/MicroG-RE/blob/main/play-services-core/src/main/res/xml/credentials_provider_google_id.xml): Advertises `<capability name="app.revanced.android.libraries.identity.googleid.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL"/>` (`tools:targetApi="34"`).
+- [PackageSpoofUtils.kt](https://github.com/MorpheApp/MicroG-RE/blob/main/play-services-base/core/src/main/kotlin/org/microg/gms/common/PackageSpoofUtils.kt): Reads `app.revanced.android.gms.SPOOFED_PACKAGE_NAME` and `app.revanced.android.gms.SPOOFED_PACKAGE_SIGNATURE` (40-character hex SHA-1) from application `<meta-data>`.
+- [play-services-core/src/main/AndroidManifest.xml](https://github.com/MorpheApp/MicroG-RE/blob/main/play-services-core/src/main/AndroidManifest.xml): Exposes all remapped GMS service actions, `phenotype`/`chimera`/`fonts` authorities, `AD_ID` permission, `iid.TOKEN_REQUEST`, and the four C2DM actions/permissions under `${basePackageName}`. Does **not** namespace `com.google.android.c2dm.intent.REGISTRATION`.
 
 ## What the patch changes
 
-The patch is intentionally target-specific and does not rename Regain's own package or local component classes.
+1. **Optional Play Services availability bypass.** Before rewriting `"com.google.android.gms"`, optionally patches `GooglePlayServicesUtilLight.isGooglePlayServicesAvailable` (return `0`) and `ensurePlayServicesAvailable` (early return) via `methodOrNull` when present, preventing `SERVICE_INVALID` signature rejections against `app.revanced.android.gms` without failing on R8-stripped builds.
+2. **Credential type namespace.** Rewrites only `com.google.android.libraries.identity.googleid.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL` to `app.revanced.android.libraries.identity.googleid.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL`. Subtype and `BUNDLE_KEY_*` keys remain unchanged.
+3. **GmsCore package, authorities, and service actions.** Remaps `com.google.android.gms`, supported authorities (`phenotype`, `chimera`, `fonts`), exact and sub-path `content://com.google.android.gms.{phenotype,chimera,fonts}` URIs, and the MicroG-RE-supported GMS service actions (`identity.service.signin`, `identity.service.credentialsaving`, `auth.api.signin`, `auth.api.credentials`, `signin`, `measurement`, `common.telemetry`, `fido2.regular`, `fonts`, `phenotype`).
+4. **Firebase/C2DM namespace.** Remaps `c2dm.intent.RECEIVE`, `c2dm.intent.REGISTER`, `c2dm.permission.RECEIVE`, `c2dm.permission.SEND`, `iid.TOKEN_REQUEST`, and `gms.permission.AD_ID` in both DEX and `AndroidManifest.xml` while explicitly keeping `com.google.android.c2dm.intent.REGISTRATION` and all Regain component class names unchanged.
+5. **Android 11+ package visibility & spoofing metadata.** Adds `<package android:name="app.revanced.android.gms" />` to `<queries>` and sets `<meta-data>` entries for `app.revanced.android.gms.SPOOFED_PACKAGE_NAME`, `app.revanced.android.gms.SPOOFED_PACKAGE_SIGNATURE` (`f1d63dc9f6d5b7ac1091b6a7723b957664d36f60`), and `app.revanced.MICROG_PACKAGE_NAME`.
+6. **Opt-in default (`default = false`).** Devices using stock Google Play Services should leave this patch disabled so the stock Google credential provider continues matching the unrewritten credential type.
 
-1. **Credential type namespace.** Rewrites only the Google ID token credential type from the Google namespace to MicroG-RE's advertised type:
+## Device setup and verification steps
 
-   `com.google.android.libraries.identity.googleid.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL`
+1. Install a Morphe MicroG-RE build whose GmsCore package is `app.revanced.android.gms`, and add the Google account to use for sign-in.
+2. On Android 14 (API 34) or newer, enable MicroG-RE's Google ID credential provider in system Credential Manager / Passwords, passkeys & accounts settings.
+3. In Morphe, enable **MicroG-RE support** when patching Regain `76.1.2139` (keeping original package `ai.regainapp`).
+4. Verify end-to-end on device:
+   - Morphe applies the patch cleanly without fingerprint or resource errors.
+   - Android Credential Manager displays MicroG-RE's account selector.
+   - Selecting an account returns a non-empty Google ID token to Regain.
+   - Regain's `/auth/google_sign_in` backend accepts the token and persists the session across restarts.
+   - FCM registration/push delivery and any optional GMS features behave as expected.
 
-   becomes:
-
-   `app.revanced.android.libraries.identity.googleid.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL`
-
-   The Google ID `BUNDLE_KEY_*` names and the `TYPE_GOOGLE_ID_TOKEN_SIWG_CREDENTIAL` subtype remain unchanged. MicroG-RE reads those original keys when it parses the request.
-
-2. **GmsCore routing.** Remaps the relevant GmsCore package/authority strings and service actions that are exposed by MicroG-RE, including Identity sign-in, Sign-In, credentials, measurement, telemetry, FIDO2, and Phenotype actions.
-
-3. **Firebase/C2DM namespace.** Remaps Regain's C2DM receive/register actions, permissions, and IID token request to the `app.revanced` namespace while keeping `com.google.android.c2dm.intent.REGISTRATION` unchanged. Push delivery is not yet device-tested.
-
-4. **Manifest metadata.** Adds or updates:
-   - `app.revanced.android.gms.SPOOFED_PACKAGE_NAME = ai.regainapp`
-   - `app.revanced.android.gms.SPOOFED_PACKAGE_SIGNATURE = f1d63dc9f6d5b7ac1091b6a7723b957664d36f60`
-   - `app.revanced.MICROG_PACKAGE_NAME = app.revanced.android.gms`
-
-   The SHA-1 is from the signer certificate in the supplied 76.1.2139 base APK's APK signing block.
-
-5. **Optional selection.** The patch is `default = false`. This is deliberate: the rewritten credential type is intended for a device with the matching MicroG-RE provider installed and enabled. Applying it without that provider can leave Regain without a provider that recognizes the credential type.
-
-## Device setup and verification
-
-1. Install a compatible Morphe MicroG-RE build whose GmsCore package is `app.revanced.android.gms`.
-2. Complete MicroG-RE setup and add the Google account that should be used for sign-in.
-3. On Android 14 or newer, enable MicroG-RE's Google ID credential provider in the system Credential Manager / password and passkey provider settings. The exact Settings menu wording depends on the device.
-4. In Morphe, apply this repository's **MicroG-RE support** patch to Regain `76.1.2139`. Leave the patch off on devices that should use normal Google Play services.
-5. Test the complete flow: provider selection, Google account selection, ID-token return to Regain, success from `/auth/google_sign_in`, and session persistence.
-
-Keep the original Regain package name `ai.regainapp`; this integration does not require app cloning.
-
-## Verification still outstanding
-
-- Applying the built patch bundle to Regain `76.1.2139` and installing on a target device.
-- Confirming Android Credential Manager actually selects the MicroG-RE provider on the target device.
-- Confirming a non-empty Google ID token is returned to Regain and accepted by `api.regainapp.ai`.
-- Confirming login persistence / refresh-token behavior.
-- Firebase FCM registration and push delivery.
-- Other optional GmsCore-dependent features such as Advertising ID.
-
-The source-level match is promising, but it is not an end-to-end login guarantee. If the Credential Manager provider does not appear or Regain rejects the token, inspect the device logs and the actual OAuth client configuration before adding broader package or signature spoofing.
+If the provider does not appear or Regain rejects the ID token, capture `logcat` filtered for `GoogleIdService`, `SignInProxyActivity`, `SpoofUtils`, and `CredentialManager` before expanding any spoofing hooks.
 
 ## Reference implementation
 
-The general Morphe GmsCore implementation was reviewed at commit
-`MorpheApp/morphe-patches@d38d9d841a965953751ef1f733e308bcde46a5a7`:
+Reviewed against `MorpheApp/morphe-patches@d38d9d841a965953751ef1f733e308bcde46a5a7`:
 
 - [Shared GmsCore patch](https://github.com/MorpheApp/morphe-patches/blob/d38d9d841a965953751ef1f733e308bcde46a5a7/patches/src/main/kotlin/app/morphe/patches/shared/misc/gms/GmsCoreSupportPatch.kt)
 - [Shared GmsCore fingerprints](https://github.com/MorpheApp/morphe-patches/blob/d38d9d841a965953751ef1f733e308bcde46a5a7/patches/src/main/kotlin/app/morphe/patches/shared/misc/gms/Fingerprints.kt)
 
-This Regain implementation is a narrow port of the parts supported by the inspected target and MicroG-RE manifest. It does not import Morphe's YouTube extension, clone-app preferences, or unrelated Google service hooks.
+This Regain patch intentionally omits Morphe's YouTube extension, app-cloning preferences, and Google-first-party GNP header hooks that do not apply to `ai.regainapp`.
