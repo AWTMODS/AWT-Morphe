@@ -1,6 +1,5 @@
 package com.awt.mimo.patches
 
-import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.patch.patch
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.builder.MutableMethodImplementation
@@ -27,13 +26,6 @@ val mimoSignatureSpoofPatch = patch(
     }
 }
 
-/**
- * Replaces every
- *   invoke-virtual {pm, name, flags}, Landroid/content/pm/PackageManager;->getPackageInfo(...)
- * with
- *   invoke-static {pm, name, flags}, L…SignatureSpoof;->getPackageInfo(...)
- * preserving the original registers exactly (verifier-safe).
- */
 private fun replaceGetPackageInfoInvoke(method: Method) {
     val impl = method.implementation as? MutableMethodImplementation
         ?: error("Method has no implementation: ${method.definingClass}->${method.name}")
@@ -43,7 +35,8 @@ private fun replaceGetPackageInfoInvoke(method: Method) {
         if (insn.opcode != Opcode.INVOKE_VIRTUAL) continue
 
         val old = insn as? BuilderInstruction35c ?: continue
-        val ref = old.reference
+        // FIX: reference is `Reference`, cast to MethodReference
+        val ref = old.reference as? MethodReference ?: continue
 
         if (ref.definingClass != "Landroid/content/pm/PackageManager;") continue
         if (ref.name != "getPackageInfo") continue
@@ -61,11 +54,16 @@ private fun replaceGetPackageInfoInvoke(method: Method) {
     }
 }
 
-/** Builds a MethodReference to SignatureSpoof.getPackageInfo(...) matching `original`. */
 private fun spoofRef(original: MethodReference): MethodReference =
     object : MethodReference {
         override fun getDefiningClass() = "Lapp/morphe/extension/signature/SignatureSpoof;"
         override fun getName() = original.name
         override fun getReturnType() = original.returnType
         override fun getParameterTypes() = original.parameterTypes
+        // FIX: MethodReference extends Reference which has these members
+        override fun validateReference() = Unit
+        override fun compareTo(other: MethodReference): Int =
+            (definingClass + "->" + name + parameterTypes.joinToString("") + returnType)
+                .compareTo(other.definingClass + "->" + other.name +
+                    other.parameterTypes.joinToString("") + other.returnType)
     }
