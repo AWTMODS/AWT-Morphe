@@ -2,10 +2,13 @@ package com.awt.regain.patches
 
 import app.morphe.patcher.Fingerprint
 import app.morphe.patcher.StringComparisonType
+import app.morphe.patcher.extensions.InstructionExtensions.addInstruction
+import app.morphe.patcher.methodCall
 import app.morphe.patcher.patch.patch
 import app.morphe.patcher.patch.replaceStrings
 import app.morphe.patcher.patch.resourceXml
 import app.morphe.patcher.string
+import app.morphe.patcher.util.registersUsed
 import app.morphe.patcher.util.returnEarly
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.awt.regain.patches.Constants.COMPATIBILITY_REGAIN
@@ -41,6 +44,33 @@ private object ServiceCheckFingerprint : Fingerprint(
 )
 
 /**
+ * Matches AndroidX CredentialProviderFrameworkImpl's call to the Android 14+ OS API
+ * CredentialOption.Builder.setIsSystemProviderRequired(boolean).
+ *
+ * GetSignInWithGoogleOption sets isSystemProviderRequired = true, which causes
+ * Android 14+ CredentialManagerService to filter out user-installed providers
+ * such as MicroG-RE and throw NoCredentialException even when MicroG-RE is
+ * enabled in system Credential Manager settings.
+ */
+private object CredentialOptionSystemProviderFingerprint : Fingerprint(
+    filters = listOf(
+        methodCall(
+            smali = "Landroid/credentials/CredentialOption\$Builder;->setIsSystemProviderRequired(Z)Landroid/credentials/CredentialOption\$Builder;",
+        ),
+    ),
+)
+
+/**
+ * Fallback match for unobfuscated androidx.credentials.GetCredentialOption.isSystemProviderRequired().
+ */
+private object GetCredentialOptionSystemProviderFingerprint : Fingerprint(
+    definingClass = "Landroidx/credentials/GetCredentialOption;",
+    name = "isSystemProviderRequired",
+    returnType = "Z",
+    parameters = emptyList(),
+)
+
+/**
  * Regain 76.1.2139 uses AndroidX Credential Manager with
  * GetSignInWithGoogleOption. MicroG-RE exposes the matching Google ID
  * CredentialProviderService under its app.revanced vendor namespace.
@@ -65,6 +95,21 @@ val microGReSupportPatch = patch(
          */
         GooglePlayUtilityFingerprint.methodOrNull?.returnEarly(0)
         ServiceCheckFingerprint.methodOrNull?.returnEarly()
+
+        /*
+         * Allow Android 14+ Credential Manager to dispatch GetSignInWithGoogleOption
+         * requests to user-installed MicroG-RE instead of restricting to system-only
+         * providers (which otherwise throws NoCredentialException).
+         */
+        CredentialOptionSystemProviderFingerprint.matchOrNull()?.let { match ->
+            val callMatch = match.instructionMatches.first()
+            val boolRegister = callMatch.instruction.registersUsed[1]
+            match.method.addInstruction(
+                callMatch.index,
+                "const/16 v$boolRegister, 0x0",
+            )
+        }
+        GetCredentialOptionSystemProviderFingerprint.methodOrNull?.returnEarly(false)
 
         /*
          * MicroG-RE's credential provider advertises:
