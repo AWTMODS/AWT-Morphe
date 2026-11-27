@@ -90,10 +90,18 @@ val microGReSupportPatch = patch(
              * MicroG-RE actually publishes. Component class names such as
              * FirebaseInstanceIdReceiver and AppMeasurementService remain
              * inside Regain's APK and must not be renamed.
+             *
+             * Keep com.google.android.c2dm.intent.REGISTRATION unchanged by
+             * replacing only the explicit C2DM actions/permissions below.
              */
-            val manifestTransformations = mapOf(
-                "com.google.android.c2dm" to "$MICROG_VENDOR_GROUP_ID.android.c2dm",
+            val manifestTransformations = linkedMapOf(
+                "com.google.android.c2dm.intent.RECEIVE" to "$MICROG_VENDOR_GROUP_ID.android.c2dm.intent.RECEIVE",
+                "com.google.android.c2dm.intent.REGISTER" to "$MICROG_VENDOR_GROUP_ID.android.c2dm.intent.REGISTER",
+                "com.google.android.c2dm.permission.RECEIVE" to "$MICROG_VENDOR_GROUP_ID.android.c2dm.permission.RECEIVE",
+                "com.google.android.c2dm.permission.SEND" to "$MICROG_VENDOR_GROUP_ID.android.c2dm.permission.SEND",
                 "com.google.android.gms.permission.AD_ID" to "$MICROG_GMS_PACKAGE.permission.AD_ID",
+                "com.google.android.gms.phenotype.service.START" to
+                    "$MICROG_GMS_PACKAGE.phenotype.service.START",
                 "com.google.android.gms.phenotype" to "$MICROG_GMS_PACKAGE.phenotype",
                 "com.google.android.gms.chimera" to "$MICROG_GMS_PACKAGE.chimera",
                 "com.google.android.gms.fonts" to "$MICROG_GMS_PACKAGE.fonts",
@@ -113,8 +121,6 @@ val microGReSupportPatch = patch(
                     "$MICROG_GMS_PACKAGE.common.telemetry.service.START",
                 "com.google.android.gms.fido.fido2.regular.START" to
                     "$MICROG_GMS_PACKAGE.fido.fido2.regular.START",
-                "com.google.android.gms.phenotype.service.START" to
-                    "$MICROG_GMS_PACKAGE.phenotype.service.START",
             )
 
             manifest.elements().forEach { element ->
