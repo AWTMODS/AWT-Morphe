@@ -1,5 +1,7 @@
 [versions]
+annotation = "1.11.0"
 morphe-patcher = "2.6.0"
+morphe-patches-library = "2.3.0"
 #noinspection GradleDependency
 smali = "5a5249e22f"
 gson = "2.15.0"
@@ -7,11 +9,13 @@ animalsniffer = "2.0.1"
 gummy-bears = "0.16.0"
 
 [libraries]
+annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 android-api-signature = { module = "com.toasttab.android:gummy-bears-api-26", version.ref = "gummy-bears" }
 # Gradle plugins adds the dependency during build, this declaration is here only for dependabot to provide updates.
 #noinspection UnusedVersionCatalogEntry
 morphe-patcher = { module = "app.morphe:morphe-patcher", version.ref = "morphe-patcher" }
+morphe-patches-library = { module = "app.morphe:morphe-patches-library", version.ref = "morphe-patches-library" }
 
 [plugins]
 animalsniffer = { id = "ru.vyarus.animalsniffer", version.ref = "animalsniffer" }
