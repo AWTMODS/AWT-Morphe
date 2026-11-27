@@ -11,7 +11,7 @@ An opt-in Morphe patch is implemented at:
 - GmsCore package: `app.revanced.android.gms`
 - Patch default: **off** (select it explicitly in Morphe)
 
-The patch source is committed to this repository branch. The patch bundle has **not** been built here, and no installed-device or backend sign-in test has been completed. Morphe can handle the bundle build as requested; a successful build alone will not establish that sign-in works.
+The patch bundle compiles in GitHub Actions (`./gradlew :patches:buildAndroid`), but no installed-device or backend sign-in test has been completed yet. A successful build alone does not establish that sign-in works end-to-end.
 
 ## Why this uses MicroG-RE
 
@@ -48,7 +48,7 @@ The patch is intentionally target-specific and does not rename Regain's own pack
 
 2. **GmsCore routing.** Remaps the relevant GmsCore package/authority strings and service actions that are exposed by MicroG-RE, including Identity sign-in, Sign-In, credentials, measurement, telemetry, FIDO2, and Phenotype actions.
 
-3. **Firebase/C2DM namespace.** Remaps Regain's C2DM receive/register actions, permissions, and IID token request to the `app.revanced` namespace. Push delivery is not yet device-tested.
+3. **Firebase/C2DM namespace.** Remaps Regain's C2DM receive/register actions, permissions, and IID token request to the `app.revanced` namespace while keeping `com.google.android.c2dm.intent.REGISTRATION` unchanged. Push delivery is not yet device-tested.
 
 4. **Manifest metadata.** Adds or updates:
    - `app.revanced.android.gms.SPOOFED_PACKAGE_NAME = ai.regainapp`
@@ -71,7 +71,7 @@ Keep the original Regain package name `ai.regainapp`; this integration does not 
 
 ## Verification still outstanding
 
-- Morphe patch-bundle compilation and patch application.
+- Applying the built patch bundle to Regain `76.1.2139` and installing on a target device.
 - Confirming Android Credential Manager actually selects the MicroG-RE provider on the target device.
 - Confirming a non-empty Google ID token is returned to Regain and accepted by `api.regainapp.ai`.
 - Confirming login persistence / refresh-token behavior.
