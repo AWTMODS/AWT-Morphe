@@ -4,9 +4,9 @@ Template repository for Morphe Patches.
 
 ## ❓ About
 
-Patches for apps I like.
+Patches for Android apps, distributed as a Morphe patch bundle. The Regain patch set includes an optional MicroG-RE integration for Google ID Credential Manager and supported GMS services.
 
-<!-- TODO: Update this about section with a brief introduction/summary about this repo and what it offers. -->
+See [Regain MicroG-RE integration notes](docs/GMSCORE_INTEGRATION.md) for provider setup, patch behavior, and the remaining device checks.
 
 ### How to use these patches
 
